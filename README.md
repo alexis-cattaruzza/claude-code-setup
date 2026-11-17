@@ -90,7 +90,7 @@ The generic rules live only in the global `~/.claude/CLAUDE.md`, which Claude Co
 
 ```
 claude-setup [-Project <folder>] [-Complete] [-Rules <file or URL>] [-NoAttribution]
-             [-Force] [-Share] [-Update] [-SkipClaudeInstall]
+             [-Force] [-Share] [-Update] [-SkipClaudeInstall] [-ConfigDir <folder>] [-CernAigw]
 ```
 
 Before `claude-setup` exists, use `powershell -ExecutionPolicy Bypass -File install.ps1` with the same options.
@@ -106,6 +106,8 @@ Before `claude-setup` exists, use `powershell -ExecutionPolicy Bypass -File inst
 | `-Share` | With `-Project`: do not hide Claude files from git, for teams that commit them | |
 | `-Update` | `git pull` this repo first, then run with the other options given | |
 | `-SkipClaudeInstall` | Do not install Claude Code if it is missing | |
+| `-ConfigDir <folder>` | Set up that Claude config folder instead of `~/.claude` (for a second account started with `CLAUDE_CONFIG_DIR`). Default: `CLAUDE_CONFIG_DIR` if set, else `~/.claude` | |
+| `-CernAigw` | Optional CERN AI Gateway workers module, see below. Installed only in the targeted config folder | yes, per config folder |
 
 Remembered options are stored in `~/.claude/claude-code-setup.json`. To forget one, delete its line there.
 
@@ -138,6 +140,32 @@ claude-setup -Update                                   # latest version of this 
 `~` is your user folder, for example `C:\Users\<you>`.
 
 Detected stacks: Node/JS/TS, Maven, Gradle, Python, Go, Rust, .NET, PHP, Ruby. Other stacks still get starter files; `/project-setup` fills them in.
+
+## Optional: CERN AI Gateway workers
+
+For CERN users with CERN AI Gateway Agents installed (`cern-aigw` on the PATH, key set with `cern-aigw configure`).
+Claude plans, splits and reviews; the free gateway models do the reading and the editing.
+
+```powershell
+claude-setup -ConfigDir $HOME\.claude-cern -CernAigw   # only the account started with CLAUDE_CONFIG_DIR=~/.claude-cern
+```
+
+Then in any repo or workspace, inside that account: `/aigw-orchestrate <ticket key or task>`.
+
+1. A mirror of the repo(s) is made with git worktrees under `/tmp/aigw/<name>`, from the current working copy (uncommitted changes included, `node_modules` linked).
+2. A worker reads the code and lists what to change and what to keep.
+3. Claude checks the risky lines, decides, and writes one precise brief per repo (max 3 workers in parallel).
+4. Workers edit the mirror. Claude builds, tests and reviews the diff.
+5. The patch is applied to your working copy, uncommitted, and the mirror is removed. Nothing is committed or pushed.
+
+| File | What it is |
+| --- | --- |
+| `<config>/skills/aigw-orchestrate/SKILL.md` | The `/aigw-orchestrate` skill (only runs when you type it) |
+| `<config>/skills/aigw-orchestrate/scripts/aigw.sh` | `prepare`, `models`, `pick`, `run`, `status`, `diff`, `reset`, `apply`, `clean` |
+| `<config>/skills/aigw-orchestrate/scripts/aigw_models.py` | Lists the models your key can call (never prints the key) |
+| `<config>/CLAUDE.md` block `cern-aigw` | Routing rules: OpenCode harness, worker models, max 3 in parallel |
+
+Tuning with environment variables: `AIGW_MODELS` (model preference order), `AIGW_MAX_PARALLEL` (default 3: more can exhaust RAM), `AIGW_DEADLINE` (minutes, default 20), `AIGW_HOME` (mirror root).
 
 ## Customising
 

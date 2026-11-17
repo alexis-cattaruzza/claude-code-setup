@@ -14,14 +14,18 @@ param(
     [switch]$Share,              # do not hide Claude files from git (team wants them committed)
     [switch]$NoAttribution,      # no Co-Authored-By / PR footer from Claude; remembered
     [switch]$Update,             # git pull this repo first, then run
-    [switch]$SkipClaudeInstall
+    [switch]$SkipClaudeInstall,
+    [string]$ConfigDir,          # Claude config folder to set up (default: CLAUDE_CONFIG_DIR, else ~/.claude)
+    [switch]$CernAigw            # optional CERN AI Gateway workers module (/aigw-orchestrate); remembered per config folder
 )
 $ErrorActionPreference = 'Stop'
 $Here      = $PSScriptRoot
 $Tpl       = Join-Path $Here 'templates'
 $Sandbox   = [bool]$env:CLAUDE_SETUP_HOME   # test runs: fake home, PATH untouched
 $UserHome  = if ($Sandbox) { $env:CLAUDE_SETUP_HOME } else { [Environment]::GetFolderPath('UserProfile') }
-$ClaudeDir = Join-Path $UserHome '.claude'
+$ClaudeDir = if ($ConfigDir) { $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($ConfigDir) }
+             elseif ($env:CLAUDE_CONFIG_DIR -and -not $Sandbox) { $env:CLAUDE_CONFIG_DIR }
+             else { Join-Path $UserHome '.claude' }
 $BinDir    = Join-Path $UserHome '.local\bin'
 $ConfigPath = Join-Path $ClaudeDir 'claude-code-setup.json'
 $BackupDir = Join-Path $ClaudeDir ("backups\claude-code-setup-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
@@ -128,6 +132,7 @@ if ($Rules) {
     $Config['rules'] = $Rules
 }
 if ($NoAttribution) { $Config['noAttribution'] = $true }
+if ($CernAigw) { $Config['cernAigw'] = $true }
 if ($Config.Count) { Save $ConfigPath (($Config | ConvertTo-Json) + "`n") 'options' }
 
 # ---------- 2. prerequisites ----------
@@ -165,6 +170,13 @@ Merge-Settings (Join-Path $ClaudeDir 'settings.json') $Global
 # ---------- 5. agent, skill and claude-setup command ----------
 Save (Join-Path $ClaudeDir 'agents\code-finder.md') (Read-Template 'agents\code-finder.md') 'agent'
 Save (Join-Path $ClaudeDir 'skills\project-setup\SKILL.md') (Read-Template 'skills\project-setup\SKILL.md') 'skill'
+if ($Config['cernAigw']) {
+    $skillDir = Join-Path $ClaudeDir 'skills\aigw-orchestrate'
+    Save (Join-Path $skillDir 'SKILL.md') (Read-Template 'optional\cern-aigw\skills\aigw-orchestrate\SKILL.md') 'skill'
+    foreach ($f in 'aigw.sh', 'aigw_models.py') { Save (Join-Path $skillDir "scripts\$f") (Read-Template "optional\cern-aigw\scripts\$f") 'skill script' }
+    Set-ManagedBlock $GlobalMd 'cern-aigw' (Read-Template 'optional\cern-aigw\CLAUDE.md')
+    if (-not (Get-Command cern-aigw -ErrorAction SilentlyContinue)) { Write-Warning 'cern-aigw not found: install CERN AI Gateway Agents and run "cern-aigw configure" before using /aigw-orchestrate.' }
+}
 Save (Join-Path $BinDir 'claude-setup.cmd') "@echo off`npowershell -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" %*`n" 'command'
 
 # ---------- 6. project (optional) ----------
