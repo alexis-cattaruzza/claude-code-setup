@@ -1,8 +1,7 @@
 ---
 name: aigw-orchestrate
-description: Run a ticket or coding task with Claude as planner and reviewer and CERN AI Gateway models as workers that read and edit a disposable git worktree mirror. Use only when the user types /aigw-orchestrate.
+description: Run a ticket or coding task with Claude as planner and reviewer and CERN AI Gateway models as workers that read and edit a disposable git worktree mirror. Use it without being asked when the task needs wide code reading (recon across many files or repos) or mechanical edits across about 3 or more files, once the design is clear. Do not use it for small fixes, single-file changes, or design and root-cause work.
 argument-hint: <ticket key or task description>
-disable-model-invocation: true
 ---
 
 # Orchestrate CERN AI Gateway workers
@@ -17,6 +16,7 @@ Env: `AIGW_MAX_PARALLEL` (default 3, more can exhaust RAM), `AIGW_DEADLINE` minu
 `AIGW_MODELS` (preference order), `AIGW_HOME` (mirror root, default /tmp/aigw).
 
 ## 0. Input
+- When started without the user typing the command, say so in one line first ("Using aigw-orchestrate: <why>").
 - The argument is a ticket key or a task. Read `.claude/tickets/<key>.md` if it exists. There is no Jira access:
   if the ticket text is missing, ask the user to paste the description and decisions.
 - Say in one line what will run (mirror name, model) and go.

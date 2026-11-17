@@ -150,7 +150,7 @@ Claude plans, splits and reviews; the free gateway models do the reading and the
 claude-setup -ConfigDir $HOME\.claude-cern -CernAigw   # only the account started with CLAUDE_CONFIG_DIR=~/.claude-cern
 ```
 
-Then in any repo or workspace, inside that account: `/aigw-orchestrate <ticket key or task>`.
+Then in any repo or workspace, inside that account, Claude uses it by itself when a task needs wide code reading or mechanical edits across about 3 or more files (it says so in one line). Force it with `/aigw-orchestrate <ticket key or task>`.
 
 1. A mirror of the repo(s) is made with git worktrees under `/tmp/aigw/<name>`, from the current working copy (uncommitted changes included, `node_modules` linked).
 2. A worker reads the code and lists what to change and what to keep.
@@ -160,7 +160,7 @@ Then in any repo or workspace, inside that account: `/aigw-orchestrate <ticket k
 
 | File | What it is |
 | --- | --- |
-| `<config>/skills/aigw-orchestrate/SKILL.md` | The `/aigw-orchestrate` skill (only runs when you type it) |
+| `<config>/skills/aigw-orchestrate/SKILL.md` | The `/aigw-orchestrate` skill (Claude starts it on large mechanical tasks, or you type it) |
 | `<config>/skills/aigw-orchestrate/scripts/aigw.sh` | `prepare`, `models`, `pick`, `run`, `status`, `diff`, `reset`, `apply`, `clean` |
 | `<config>/skills/aigw-orchestrate/scripts/aigw_models.py` | Lists the models your key can call (never prints the key) |
 | `<config>/CLAUDE.md` block `cern-aigw` | Routing rules: OpenCode harness, worker models, max 3 in parallel |

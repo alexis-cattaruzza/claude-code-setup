@@ -17,7 +17,10 @@ Never delegate: root-cause analysis, design, state machine or guard logic, confi
 Edits to source files only through /aigw-orchestrate below.
 
 ## CERN AI Gateway workers (optional module)
-- `/aigw-orchestrate <ticket or task>`: Claude plans, splits and reviews; gateway models read and edit a disposable
+- Use the aigw-orchestrate skill on your own, without being asked, when it saves Claude tokens: recon across many
+  files or repos, or mechanical edits across about 3 or more files once the design is decided. Not for small fixes,
+  single-file changes, design or root-cause work: do those directly. The user can also force it with `/aigw-orchestrate`.
+- aigw-orchestrate: Claude plans, splits and reviews; gateway models read and edit a disposable
   git worktree mirror; the reviewed patch is applied to the working copy, uncommitted. Edits never reach the working
   copy without Claude's review.
 - Workers on a mirror always use `--host opencode`: `--host claude` adds about 37k tokens per call and fails with
